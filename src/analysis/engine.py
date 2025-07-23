@@ -1,37 +1,45 @@
 import ollama
 import json
 
-def analyze_review_pros_cons(review_text: str) -> dict | None:
+def analyze_review_full(review_text: str) -> dict | None:
     """
-    Analyzes a single game review to extract pros and cons using an LLM.
-
-    Args:
-        review_text (str): The text of the game review.
-
-    Returns:
-        dict: A dictionary containing 'pros' and 'cons' lists,
-              or None if analysis fails.
+    分析单条游戏长评，输出内容摘要、优点、缺点、标签。
+    返回格式:
+    {
+        "summary": "内容摘要",
+        "pros": "优点总结",
+        "cons": "缺点总结",
+        "tags": "标签1,标签2,标签3"
+    }
     """
-    # Truncate the review to avoid exceeding context limits or slow processing.
-    # 2000 characters are usually enough to capture the main points.
     truncated_text = review_text[:2000]
 
     prompt = f"""
-    You are a professional game review analyst. Read the following game review carefully.
-    Your task is to extract the key positive points (Pros) and negative points (Cons) mentioned by the player.
-    - List up to 3 main Pros.
-    - List up to 3 main Cons.
-    - If a point is not clearly mentioned, do not include it in the list.
-    - Your response MUST be a valid JSON object. Do not add any text before or after the JSON.
-    - The JSON object should look like this: {{"pros": ["..."], "cons": ["..."]}}
+    你是一位专业的游戏评论分析师，擅长从玩家长评中提取内容要点、情绪倾向与核心要素。请仔细阅读以下玩家长评，完成以下任务：
 
-    Review text:
-    ---
+    1. 【内容摘要】：用简洁自然语言总结这条长评的核心观点与情感体验，涵盖主要情节描述、角色评价和玩家共鸣，控制在200字以内；
+    2. 【优点总结】：从剧情、角色塑造、演出表现、情感深度等维度，归纳玩家认为的主要优点，不要机械列点，而要用完整语句概括总结；
+    3. 【缺点总结】：指出玩家提到的主要问题或槽点，涵盖逻辑问题、节奏问题、角色崩坏等，同样避免列点，采用自然语言描述；
+    4. 【内容标签】：基于该长评本身提及的要素，从“剧情”“角色”“氛围”“演出”“音乐”“哲学主题”“世界观构建”“玩家情感共鸣”等维度中选择最相关的3-5个标签，必须具体明确，不允许使用“吐槽”“抽象”“感想”类泛泛词汇；
+    5. 【标签属性分类】：为每个标签指定对应的内容主题分类（例如：剧情->叙事，角色->角色，演出->演出等），输出为一个键值对形式。
+
+    请以**严格的JSON格式**输出，结构如下：
+    {{
+      "summary": "<内容摘要>",
+      "pros": "<优点总结>",
+      "cons": "<缺点总结>",
+      "tags": "<标签1,标签2,标签3>",
+      "tag_attributes": {{
+        "标签1": "所属维度",
+        "标签2": "所属维度",
+        ...
+      }}
+    }}
+
+    玩家长评如下：
     {truncated_text}
-    ---
     """
 
-    # Create a client with a longer timeout for the first request
     client = ollama.Client(timeout=300)
 
     try:
@@ -40,24 +48,23 @@ def analyze_review_pros_cons(review_text: str) -> dict | None:
             messages=[
                 {
                     'role': 'system',
-                    'content': 'You are a game analysis assistant that responds only with valid JSON.',
+                    'content': '你是一个只输出有效JSON的游戏分析助手。',
                 },
                 {
                     'role': 'user',
                     'content': prompt,
                 },
             ],
-            format='json',  # Ask Ollama to ensure the output is JSON
+            format='json',
         )
 
-        # The 'format="json"' parameter ensures the content is a JSON object.
         analysis_result = json.loads(response['message']['content'])
-        
-        # Basic validation
-        if 'pros' in analysis_result and 'cons' in analysis_result:
+
+        # 基本校验
+        if all(k in analysis_result for k in ['summary', 'pros', 'cons', 'tags', 'tag_attributes']):
             return analysis_result
         else:
-            print("Warning: LLM response JSON is missing 'pros' or 'cons' keys.")
+            print("Warning: LLM response JSON missing keys.")
             return None
 
     except Exception as e:

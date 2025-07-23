@@ -1,10 +1,11 @@
 import os
 from dotenv import load_dotenv
 from src.data.loader import load_reviews
-from src.analysis.engine import analyze_review_pros_cons
+from src.analysis.engine import analyze_review_full
 
 import json
 from tqdm import tqdm
+
 
 def load_existing_results(file_path):
     """Loads existing analysis results from a JSON file."""
@@ -57,21 +58,24 @@ def main():
             review_content = row['长评内容']
 
             try:
-                analysis = analyze_review_pros_cons(review_content)
+                analysis = analyze_review_full(review_content)  # 用新版
                 if analysis:
                     all_results.append({
                         'game_name': game_name,
                         'review_content': review_content,
-                        'analysis': analysis
+                        'summary': analysis.get('summary', ''),
+                        'pros': analysis.get('pros', ''),
+                        'cons': analysis.get('cons', ''),
+                        'tags': analysis.get('tags', '')
                     })
                 else:
-                    # Optionally log failures
                     print(f"\nAnalysis failed for a review of '{game_name}'. Skipping.")
 
             except Exception as e:
                 print(f"\nAn unexpected error occurred during analysis for '{game_name}': {e}")
-            
+
             # Save after each analysis for checkpointing
+
             save_results(all_results, results_file_path)
 
     print("\n[Phase 3: Analysis Complete]")
