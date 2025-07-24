@@ -1,6 +1,7 @@
 import ollama
 import json
 
+
 def analyze_review_full(review_text: str) -> dict | None:
     """
     分析单条游戏长评，输出内容摘要、优点、缺点、标签。
@@ -36,7 +37,7 @@ def analyze_review_full(review_text: str) -> dict | None:
 
     2. 【优点总结】：
        - 详细列举玩家提到的所有正面评价
-       - 按维度分类：剧情亮点、角色魅力、演出效果、音乐表现、情感共鸣等
+       - 可以按一下维度分类，比如剧情亮点、角色魅力、演出效果、音乐表现、情感共鸣等方面进行优点总结
        - 保留玩家的原始表达和具体例子
        - 挖掘隐含的赞美和积极情绪
        - 用完整段落描述，不要简单罗列
@@ -66,7 +67,7 @@ def analyze_review_full(review_text: str) -> dict | None:
       "pros": "<详尽的优点总结，包含具体细节和玩家感受>",
       "cons": "<全面的缺点总结，涵盖所有提及的问题>",
       "tags": "<标签1,标签2,标签3,标签4,标签5>",
-      
+
     }}
 
     玩家长评如下：
