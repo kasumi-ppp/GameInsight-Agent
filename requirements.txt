@@ -1,0 +1,6 @@
+e2b-code-interpreter
+python-dotenv
+ollama
+pandas
+openpyxl
+tqdm
