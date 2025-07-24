@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+$py.class
+
+venv/
+.venv/
+
+.env
+
+.idea/
+.vscode/
+
+.pytest_cache/
+
+save/
+analysis_results.json
